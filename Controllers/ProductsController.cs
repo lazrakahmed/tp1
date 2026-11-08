@@ -1,5 +1,4 @@
 using FTELMarket.Dtos;
-using FTELMarket.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FTELMarket.Controllers;
@@ -8,28 +7,28 @@ namespace FTELMarket.Controllers;
 [Route("api/[controller]")]
 public class ProductsController : ControllerBase
 {
-  private static readonly List<Product> Products = new()
+  private static readonly List<ProductResponse> Products = new()
   {
-    new Product { Id = 1, Name = "The Last of Us Part II", Description = "Boîte et notice, disque sans rayure.", Price = 19.9m, Stock = 3, CategoryId = 1, CategoryName = "PlayStation 5", CreatedAt = new DateTime(2026, 9, 2, 9, 15, 0, DateTimeKind.Utc) },
-    new Product { Id = 2, Name = "Gran Turismo 7", Description = null, Price = 29.9m, Stock = 1, CategoryId = 1, CategoryName = "PlayStation 5", CreatedAt = new DateTime(2026, 9, 5, 14, 30, 0, DateTimeKind.Utc) },
-    new Product { Id = 3, Name = "The Legend of Zelda: Tears of the Kingdom", Description = "Cartouche seule.", Price = 39.9m, Stock = 2, CategoryId = 2, CategoryName = "Nintendo Switch", CreatedAt = new DateTime(2026, 9, 8, 10, 0, 0, DateTimeKind.Utc) },
-    new Product { Id = 4, Name = "Mario Kart 8 Deluxe", Description = "Complet, très bon état.", Price = 34.9m, Stock = 5, CategoryId = 2, CategoryName = "Nintendo Switch", CreatedAt = new DateTime(2026, 9, 10, 16, 45, 0, DateTimeKind.Utc) },
-    new Product { Id = 5, Name = "Halo Infinite", Description = null, Price = 14.9m, Stock = 4, CategoryId = 3, CategoryName = "Xbox Series X", CreatedAt = new DateTime(2026, 9, 12, 11, 20, 0, DateTimeKind.Utc) },
-    new Product { Id = 6, Name = "Forza Horizon 5", Description = "Édition standard.", Price = 24.9m, Stock = 0, CategoryId = 3, CategoryName = "Xbox Series X", CreatedAt = new DateTime(2026, 9, 15, 8, 5, 0, DateTimeKind.Utc) },
-    new Product { Id = 7, Name = "Baldur’s Gate 3", Description = "Clé physique, coffret collector.", Price = 44.9m, Stock = 1, CategoryId = 4, CategoryName = "PC", CreatedAt = new DateTime(2026, 9, 18, 17, 40, 0, DateTimeKind.Utc) },
-    new Product { Id = 8, Name = "Hades", Description = null, Price = 9.9m, Stock = 6, CategoryId = 4, CategoryName = "PC", CreatedAt = new DateTime(2026, 9, 21, 13, 10, 0, DateTimeKind.Utc) }
+    new ProductResponse { Id = 1, Name = "The Last of Us Part II", Description = "Boîte et notice, disque sans rayure.", Price = 19.9m, Stock = 3, CategoryId = 1, CategoryName = "PlayStation 5", CreatedAt = new DateTime(2026, 9, 2, 9, 15, 0, DateTimeKind.Utc) },
+    new ProductResponse { Id = 2, Name = "Gran Turismo 7", Description = null, Price = 29.9m, Stock = 1, CategoryId = 1, CategoryName = "PlayStation 5", CreatedAt = new DateTime(2026, 9, 5, 14, 30, 0, DateTimeKind.Utc) },
+    new ProductResponse { Id = 3, Name = "The Legend of Zelda: Tears of the Kingdom", Description = "Cartouche seule.", Price = 39.9m, Stock = 2, CategoryId = 2, CategoryName = "Nintendo Switch", CreatedAt = new DateTime(2026, 9, 8, 10, 0, 0, DateTimeKind.Utc) },
+    new ProductResponse { Id = 4, Name = "Mario Kart 8 Deluxe", Description = "Complet, très bon état.", Price = 34.9m, Stock = 5, CategoryId = 2, CategoryName = "Nintendo Switch", CreatedAt = new DateTime(2026, 9, 10, 16, 45, 0, DateTimeKind.Utc) },
+    new ProductResponse { Id = 5, Name = "Halo Infinite", Description = null, Price = 14.9m, Stock = 4, CategoryId = 3, CategoryName = "Xbox Series X", CreatedAt = new DateTime(2026, 9, 12, 11, 20, 0, DateTimeKind.Utc) },
+    new ProductResponse { Id = 6, Name = "Forza Horizon 5", Description = "Édition standard.", Price = 24.9m, Stock = 0, CategoryId = 3, CategoryName = "Xbox Series X", CreatedAt = new DateTime(2026, 9, 15, 8, 5, 0, DateTimeKind.Utc) },
+    new ProductResponse { Id = 7, Name = "Baldur’s Gate 3", Description = "Clé physique, coffret collector.", Price = 44.9m, Stock = 1, CategoryId = 4, CategoryName = "PC", CreatedAt = new DateTime(2026, 9, 18, 17, 40, 0, DateTimeKind.Utc) },
+    new ProductResponse { Id = 8, Name = "Hades", Description = null, Price = 9.9m, Stock = 6, CategoryId = 4, CategoryName = "PC", CreatedAt = new DateTime(2026, 9, 21, 13, 10, 0, DateTimeKind.Utc) }
   };
 
   private static int _nextId = 9;
 
   [HttpGet(Name = "GetProducts")]
-  public List<Product> Get()
+  public List<ProductResponse> Get()
   {
     return Products;
   }
 
   [HttpPost]
-  public ActionResult<Product> Create(ProductPayload payload)
+  public ActionResult<ProductResponse> Create(ProductPayload payload)
   {
     var category = CategoriesController.Categories.FirstOrDefault(c => c.Id == payload.CategoryId);
     if (category is null)
@@ -37,7 +36,7 @@ public class ProductsController : ControllerBase
       return BadRequest(new { message = "Cette catégorie n'existe pas." });
     }
 
-    var product = new Product
+    var product = new ProductResponse
     {
       Id = _nextId++,
       Name = payload.Name,
@@ -54,7 +53,7 @@ public class ProductsController : ControllerBase
   }
 
   [HttpPut("{id}")]
-  public ActionResult<Product> Update(int id, ProductPayload payload)
+  public ActionResult<ProductResponse> Update(int id, ProductPayload payload)
   {
     var product = Products.FirstOrDefault(p => p.Id == id);
     if (product is null)

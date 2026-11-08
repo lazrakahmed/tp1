@@ -1,3 +1,5 @@
+using FTELMarket.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace FTELMarket;
 
@@ -12,6 +14,10 @@ public class Program
         builder.Services.AddControllers();
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
         builder.Services.AddOpenApi();
+
+        // Register the DbContext: PostgreSQL, connection string read from appsettings.json.
+        builder.Services.AddDbContext<FtelMarketContext>(options =>
+          options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
         builder.Services.AddCors(options =>
         {
