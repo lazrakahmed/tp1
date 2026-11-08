@@ -1,5 +1,8 @@
+using FTELMarket.Data;
 using FTELMarket.Dtos;
+using FTELMarket.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FTELMarket.Controllers;
 
@@ -7,85 +10,103 @@ namespace FTELMarket.Controllers;
 [Route("api/[controller]")]
 public class ProductsController : ControllerBase
 {
-  private static readonly List<ProductResponse> Products = new()
-  {
-    new ProductResponse { Id = 1, Name = "The Last of Us Part II", Description = "Boîte et notice, disque sans rayure.", Price = 19.9m, Stock = 3, CategoryId = 1, CategoryName = "PlayStation 5", CreatedAt = new DateTime(2026, 9, 2, 9, 15, 0, DateTimeKind.Utc) },
-    new ProductResponse { Id = 2, Name = "Gran Turismo 7", Description = null, Price = 29.9m, Stock = 1, CategoryId = 1, CategoryName = "PlayStation 5", CreatedAt = new DateTime(2026, 9, 5, 14, 30, 0, DateTimeKind.Utc) },
-    new ProductResponse { Id = 3, Name = "The Legend of Zelda: Tears of the Kingdom", Description = "Cartouche seule.", Price = 39.9m, Stock = 2, CategoryId = 2, CategoryName = "Nintendo Switch", CreatedAt = new DateTime(2026, 9, 8, 10, 0, 0, DateTimeKind.Utc) },
-    new ProductResponse { Id = 4, Name = "Mario Kart 8 Deluxe", Description = "Complet, très bon état.", Price = 34.9m, Stock = 5, CategoryId = 2, CategoryName = "Nintendo Switch", CreatedAt = new DateTime(2026, 9, 10, 16, 45, 0, DateTimeKind.Utc) },
-    new ProductResponse { Id = 5, Name = "Halo Infinite", Description = null, Price = 14.9m, Stock = 4, CategoryId = 3, CategoryName = "Xbox Series X", CreatedAt = new DateTime(2026, 9, 12, 11, 20, 0, DateTimeKind.Utc) },
-    new ProductResponse { Id = 6, Name = "Forza Horizon 5", Description = "Édition standard.", Price = 24.9m, Stock = 0, CategoryId = 3, CategoryName = "Xbox Series X", CreatedAt = new DateTime(2026, 9, 15, 8, 5, 0, DateTimeKind.Utc) },
-    new ProductResponse { Id = 7, Name = "Baldur’s Gate 3", Description = "Clé physique, coffret collector.", Price = 44.9m, Stock = 1, CategoryId = 4, CategoryName = "PC", CreatedAt = new DateTime(2026, 9, 18, 17, 40, 0, DateTimeKind.Utc) },
-    new ProductResponse { Id = 8, Name = "Hades", Description = null, Price = 9.9m, Stock = 6, CategoryId = 4, CategoryName = "PC", CreatedAt = new DateTime(2026, 9, 21, 13, 10, 0, DateTimeKind.Utc) }
-  };
+  private readonly FtelMarketContext _db;
 
-  private static int _nextId = 9;
+  public ProductsController(FtelMarketContext db)
+  {
+    _db = db;
+  }
 
   [HttpGet(Name = "GetProducts")]
-  public List<ProductResponse> Get()
+  public async Task<List<ProductResponse>> Get()
   {
-    return Products;
+    // Include makes EF JOIN the Categories table so p.Category is filled in.
+    var products = await _db.Products
+      .Include(p => p.Category)
+      .OrderBy(p => p.Id)
+      .ToListAsync();
+
+    return products.Select(ToResponse).ToList();
   }
 
   [HttpPost]
-  public ActionResult<ProductResponse> Create(ProductPayload payload)
+  public async Task<ActionResult<ProductResponse>> Create(ProductPayload payload)
   {
-    var category = CategoriesController.Categories.FirstOrDefault(c => c.Id == payload.CategoryId);
+    var category = await _db.Categories.FindAsync(payload.CategoryId);
     if (category is null)
     {
       return BadRequest(new { message = "Cette catégorie n'existe pas." });
     }
 
-    var product = new ProductResponse
+    var product = new Product
     {
-      Id = _nextId++,
       Name = payload.Name,
       Description = payload.Description,
       Price = payload.Price,
       Stock = payload.Stock,
-      CategoryId = category.Id,
-      CategoryName = category.Name,
+      Category = category,
       CreatedAt = DateTime.UtcNow
     };
-    Products.Add(product);
+    _db.Products.Add(product);
+    await _db.SaveChangesAsync();   // the INSERT happens here; the database assigns the Id
 
-    return Created($"/api/products/{product.Id}", product);
+    return Created($"/api/products/{product.Id}", ToResponse(product));
   }
 
   [HttpPut("{id}")]
-  public ActionResult<ProductResponse> Update(int id, ProductPayload payload)
+  public async Task<ActionResult<ProductResponse>> Update(int id, ProductPayload payload)
   {
-    var product = Products.FirstOrDefault(p => p.Id == id);
+    var product = await _db.Products.FindAsync(id);
     if (product is null)
     {
       return NotFound(new { message = "Ce produit n'existe pas." });
     }
 
-    var category = CategoriesController.Categories.FirstOrDefault(c => c.Id == payload.CategoryId);
+    var category = await _db.Categories.FindAsync(payload.CategoryId);
     if (category is null)
     {
       return BadRequest(new { message = "Cette catégorie n'existe pas." });
     }
 
+    // PUT replaces every field; Id and CreatedAt are kept.
     product.Name = payload.Name;
     product.Description = payload.Description;
     product.Price = payload.Price;
     product.Stock = payload.Stock;
-    product.CategoryId = category.Id;
-    product.CategoryName = category.Name;
+    product.Category = category;
+    await _db.SaveChangesAsync();   // EF noticed which properties changed and sends an UPDATE
 
-    return product;
+    return ToResponse(product);
   }
 
   [HttpDelete("{id}")]
-  public IActionResult Delete(int id)
+  public async Task<IActionResult> Delete(int id)
   {
-    var product = Products.FirstOrDefault(p => p.Id == id);
+    var product = await _db.Products.FindAsync(id);
     if (product is null)
     {
       return NotFound(new { message = "Ce produit n'existe pas." });
     }
-    Products.Remove(product);
+
+    _db.Products.Remove(product);
+    await _db.SaveChangesAsync();
+
     return NoContent();
+  }
+
+  // Entity -> JSON shape expected by the front. product.Category must be loaded.
+  private static ProductResponse ToResponse(Product product)
+  {
+    return new ProductResponse
+    {
+      Id = product.Id,
+      Name = product.Name,
+      Description = product.Description,
+      Price = product.Price,
+      Stock = product.Stock,
+      CategoryId = product.CategoryId,
+      CategoryName = product.Category.Name,
+      CreatedAt = product.CreatedAt
+    };
   }
 }

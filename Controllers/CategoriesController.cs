@@ -17,14 +17,6 @@ public class CategoriesController : ControllerBase
     _db = db;
   }
 
-  // Temporary: ProductsController still reads this list until it moves to the database too.
-  public static readonly List<Category> Categories = [
-    new Category { Id = 1, Name = "PlayStation 5" },
-    new Category { Id = 2, Name = "Nintendo Switch" },
-    new Category { Id = 3, Name = "Xbox Series X" },
-    new Category { Id = 4, Name = "PC" }
-  ];
-
   [HttpGet(Name = "GetCategories")]
   public async Task<List<Category>> Get()
   {
