@@ -76,6 +76,18 @@ public class ProductsController : ControllerBase
 
     return product;
   }
+
+  [HttpDelete("{id}")]
+  public IActionResult Delete(int id)
+  {
+    var product = Products.FirstOrDefault(p => p.Id == id);
+    if (product is null)
+    {
+      return NotFound(new { message = "Ce produit n'existe pas." });
+    }
+    Products.Remove(product);
+    return NoContent();
+  }
 }
 
 
