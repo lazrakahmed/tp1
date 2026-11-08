@@ -1,4 +1,4 @@
-using System.Reflection.Metadata.Ecma335;
+using FTELMarket.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FTELMarket.Controllers;
@@ -20,10 +20,4 @@ public class CategoriesController : ControllerBase
     return Categories;
   }
 
-}
-
-public class Category
-{
-  public int Id {get; set;}
-  public required string Name {get; set;}
 }

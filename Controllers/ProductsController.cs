@@ -1,4 +1,5 @@
-using System.ComponentModel.DataAnnotations;
+using FTELMarket.Dtos;
+using FTELMarket.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FTELMarket.Controllers;
@@ -88,35 +89,4 @@ public class ProductsController : ControllerBase
     Products.Remove(product);
     return NoContent();
   }
-}
-
-
-public class ProductPayload
-{
-  [Required, StringLength(200)]
-  public string Name { get; set; } = "";
-
-  [StringLength(1000)]
-  public string? Description { get; set; }
-
-  [Range(0.01, 1_000_000)]
-  public decimal Price { get; set; }
-
-  [Range(0, int.MaxValue)]
-  public int Stock { get; set; }
-
-  [Range(1, int.MaxValue)]
-  public int CategoryId { get; set; }
-}
-
-public class Product
-{
-  public int Id {get; set;}
-  public required string Name {get; set;}
-  public string? Description {get; set;}
-  public decimal Price {get; set;}
-  public int Stock {get; set;}
-  public int CategoryId {get; set;}
-  public required string CategoryName {get; set;}
-  public DateTime CreatedAt {get; set;}
 }
